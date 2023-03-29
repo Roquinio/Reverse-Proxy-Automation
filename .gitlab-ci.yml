@@ -1,0 +1,37 @@
+stages:
+    - check
+    - renew
+    - new domain
+
+
+check:
+  image: alpine:latest
+  stage: check
+  script:
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $RP_USER@$RP_SERVER "sudo nginx -t"
+
+renew:
+  image: alpine:latest
+  needs:
+    - check
+  stage: renew
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $RP_USER@$RP_SERVER "sudo bash -x /srv/reverse-proxy/scripts/update-cert.sh"
+
+
+new domain:
+    image: alpine:latest
+    stage: new domain
+    script:
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $RP_USER@$RP_SERVER "bash /srv/reverse-proxy/scripts/git_pull.sh"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $RP_USER@$RP_SERVER "sudo python3 /srv/reverse-proxy/scripts/new_domain.py"
+    rules:
+      - if: $CI_COMMIT_MESSAGE =~ /domain(.?)*/ && $CI_PIPELINE_SOURCE != "schedule"

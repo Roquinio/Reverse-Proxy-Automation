@@ -1,0 +1,9 @@
+---     
+      example1: 
+        - domain: example1.baptisteroques.fr
+        - url: "http://10.0.0.1"
+
+      example2: 
+        - domain: example2.baptisteroques.fr
+        - url: "https://10.0.0.2"
+
